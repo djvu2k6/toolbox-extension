@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+  <title>Toolbox</title>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span class="logo">🧰 Toolbox</span>
+      <button class="theme-toggle" id="themeToggle">🌙</button>
+    </div>
+    <div class="tools-grid">
+      <div class="tool-item" data-tool="notepad">
+        <span class="tool-icon">📝</span>
+        <span class="tool-name">Notepad</span>
+      </div>
+      <div class="tool-item" data-tool="sticky">
+        <span class="tool-icon">🗒️</span>
+        <span class="tool-name">Sticky Notes</span>
+      </div>
+      <div class="tool-item" data-tool="highlighter">
+        <span class="tool-icon">🖊️</span>
+        <span class="tool-name">Highlighter</span>
+      </div>
+      <div class="tool-item" data-tool="screenshot">
+        <span class="tool-icon">📸</span>
+        <span class="tool-name">Screenshot</span>
+      </div>
+      <div class="tool-item" data-tool="reader">
+        <span class="tool-icon">📖</span>
+        <span class="tool-name">Reader Mode</span>
+      </div>
+      <div class="tool-item" data-tool="todo">
+        <span class="tool-icon">✅</span>
+        <span class="tool-name">Todo</span>
+      </div>
+      <div class="tool-item" data-tool="pomodoro">
+        <span class="tool-icon">⏱️</span>
+        <span class="tool-name">Pomodoro</span>
+      </div>
+      <div class="tool-item" data-tool="colorpicker">
+        <span class="tool-icon">🎨</span>
+        <span class="tool-name">Color Picker</span>
+      </div>
+      <div class="tool-item" data-tool="wordcount">
+        <span class="tool-icon">🔢</span>
+        <span class="tool-name">Word Count</span>
+      </div>
+      <div class="tool-item" data-tool="ruler">
+        <span class="tool-icon">📏</span>
+        <span class="tool-name">Ruler</span>
+      </div>
+      <div class="tool-item" data-tool="imgdownloader">
+        <span class="tool-icon">🖼️</span>
+        <span class="tool-name">Image DL</span>
+      </div>
+    </div>
+    <!-- Tool Views -->
+<div class="tool-view" id="toolView" style="display:none;">
+  <div class="tool-header">
+    <button class="back-btn" id="backBtn">← Back</button>
+    <span class="tool-title" id="toolTitle"></span>
+  </div>
+  <div class="tool-content" id="toolContent"></div>
+</div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
