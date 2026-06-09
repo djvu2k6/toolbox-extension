@@ -3,8 +3,7 @@
 A Chrome extension that packs 11 essential productivity 
 tools into one place. No more switching between extensions.
 
-![Toolbox Grid](toolbox-extension
-/assets/screenshot-grid.png)
+![Toolbox Grid](assets/screenshot-grid.png)
 
 ## Tools
 
@@ -25,15 +24,12 @@ tools into one place. No more switching between extensions.
 ## Screenshots
 
 <p float="left">
-  <img src="toolbox-extension
-/assets/screenshot-grid.png" width="280"/>
+  <img src="assets/screenshot-grid.png" width="280"/>
   <img src="assets/screenshot-notepad.png" width="280"/>
 </p>
 <p float="left">
-  <img src="toolbox-extension
-/assets/screenshot-pomodoro.png" width="280"/>
-  <img src="toolbox-extension
-/assets/screenshot-highlighter.png" width="280"/>
+  <img src="assets/screenshot-pomodoro.png" width="280"/>
+  <img src="assets/screenshot-highlighter.png" width="280"/>
 </p>
 
 ## Install Locally
