@@ -717,22 +717,10 @@ function renderScreenshot() {
           // Scroll to position
           chrome.scripting.executeScript({
             target: { tabId },
-           func: (scrollY) => {
-  // Hide fixed elements during capture to prevent duplication
-  const fixedEls = document.querySelectorAll('*');
-  const hidden = [];
-  fixedEls.forEach(el => {
-    const pos = getComputedStyle(el).position;
-    if (pos === 'fixed' || pos === 'sticky') {
-      hidden.push({ el, display: el.style.display });
-      el.style.display = 'none';
-    }
-  });
-  window.scrollTo(0, scrollY);
-  // Store hidden elements to restore after capture
-  window._toolboxHidden = hidden;
-  return window.scrollY;
-},
+            func: (scrollY) => {
+              window.scrollTo(0, scrollY);
+              return window.scrollY;
+            },
             args: [currentScroll]
           }, () => {
             // Wait for scroll and render
@@ -767,19 +755,6 @@ function renderScreenshot() {
           });
         }
 
-        // Restore fixed elements
-chrome.scripting.executeScript({
-  target: { tabId },
-  func: () => {
-    if (window._toolboxHidden) {
-      window._toolboxHidden.forEach(({ el, display }) => {
-        el.style.display = display;
-      });
-      window._toolboxHidden = null;
-    }
-  }
-});
-
         captureFrame();
       });
     });
@@ -792,25 +767,42 @@ function stitchFrames(frames, width, viewportHeight, totalHeight, status) {
   canvas.width = width;
   canvas.height = totalHeight;
   const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, totalHeight);
 
   let loaded = 0;
 
-  frames.forEach((frame) => {
+  // Sort frames by scrollY to ensure correct order
+  frames.sort((a, b) => a.scrollY - b.scrollY);
+
+  frames.forEach((frame, index) => {
     const img = new Image();
     img.onload = () => {
-      // For the last frame, only draw the remaining portion
-      const isLast = frame.scrollY + viewportHeight > totalHeight;
+      const isLast = index === frames.length - 1;
+
       if (isLast) {
-        const remaining = totalHeight - frame.scrollY;
-        const srcY = viewportHeight - remaining;
-        ctx.drawImage(img, 0, srcY, width, remaining, 0, frame.scrollY, width, remaining);
+        // Last frame — only draw the remaining portion
+        const drawn = frame.scrollY;
+        const remaining = totalHeight - drawn;
+        // Source: bottom portion of the captured image
+        const srcY = img.naturalHeight - (remaining * img.naturalHeight / viewportHeight);
+        const srcH = remaining * img.naturalHeight / viewportHeight;
+        ctx.drawImage(
+          img,
+          0, srcY, img.naturalWidth, srcH,
+          0, drawn, width, remaining
+        );
       } else {
-        ctx.drawImage(img, 0, frame.scrollY);
+        // Normal frame — draw full viewport height at scroll position
+        ctx.drawImage(
+          img,
+          0, 0, img.naturalWidth, img.naturalHeight,
+          0, frame.scrollY, width, viewportHeight
+        );
       }
 
       loaded++;
       if (loaded === frames.length) {
-        // Download
         const dataUrl = canvas.toDataURL('image/png');
         const a = document.createElement('a');
         a.href = dataUrl;
