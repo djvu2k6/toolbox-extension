@@ -4,6 +4,24 @@ const toolTitle = document.getElementById('toolTitle');
 const toolContent = document.getElementById('toolContent');
 const backBtn = document.getElementById('backBtn');
 
+// Theme
+const themeToggle = document.getElementById('themeToggle');
+chrome.storage.local.get('toolbox_theme', (data) => {
+  if (data.toolbox_theme === 'light') {
+    document.body.classList.add('light');
+    themeToggle.innerHTML = '<i data-lucide="sun" width="14" height="14"></i>';
+    lucide.createIcons();
+  }
+});
+
+themeToggle.addEventListener('click', () => {
+  const isLight = document.body.classList.toggle('light');
+  chrome.storage.local.set({ toolbox_theme: isLight ? 'light' : 'dark' });
+  themeToggle.innerHTML = isLight
+    ? '<i data-lucide="sun" width="14" height="14"></i>'
+    : '<i data-lucide="moon" width="14" height="14"></i>';
+  lucide.createIcons();
+});
 // ADD FORMATTIME RIGHT HERE
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -13,46 +31,46 @@ function formatTime(seconds) {
 // Tool definitions - we'll add each tool here day by day
 const tools = {
   notepad: {
-    name: '📝 Notepad',
+    name: ' Notepad',
     render: renderNotepad
   },
   pomodoro: {
-    name: '⏱️ Pomodoro',
+    name: ' Pomodoro',
     render: renderPomodoro
   },
   wordcount: {
-    name: '🔢 Word Counter',
+    name: ' Word Counter',
     render: renderWordCount
   },
   todo: {
-    name: '✅ Todo',
+    name: ' Todo',
     render: renderTodo
   }, highlighter: {
-    name: '🖊️ Highlighter',
+    name: ' Highlighter',
     render: renderHighlighter
   },
   sticky: {
-    name: '🗒️ Sticky Notes',
+    name: ' Sticky Notes',
     render: renderSticky
   },
   colorpicker: {
-    name: '🎨 Color Picker',
+    name: ' Color Picker',
     render: renderColorPicker
   },
 ruler: {
-    name: '📏 Ruler',
+    name: ' Ruler',
     render: renderRuler
   },
 screenshot: {
-    name: '📸 Screenshot',
+    name: ' Screenshot',
     render: renderScreenshot
   },
 reader: {
-    name: '📖 Reader Mode',
+    name: ' Reader Mode',
     render: renderReaderMode
   },
 imgdownloader: {
-    name: '🖼️ Image DL',
+    name: ' Image DL',
     render: renderImageDownloader
   },
 };
@@ -386,7 +404,7 @@ function renderHighlighter() {
   toolContent.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:16px;padding:10px 0;">
       <p style="font-size:13px;color:#aaa;line-height:1.6;">
-        Select any text on the page to highlight it. Choose a color below first.
+        Select any text on the page to highlight it.
       </p>
       <div style="display:flex;flex-direction:column;gap:8px;">
         <span style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;">Color</span>
@@ -398,6 +416,7 @@ function renderHighlighter() {
         </div>
       </div>
       <button class="pomo-btn pomo-start" id="highlightToggle" style="width:100%;">Activate Highlighter</button>
+      <button class="pomo-btn pomo-reset" id="eraseHighlights" style="width:100%;"> Erase All Highlights</button>
       <p style="font-size:11px;color:#555;text-align:center;">Highlighter stays active after closing this popup</p>
     </div>
   `;
@@ -427,8 +446,11 @@ function renderHighlighter() {
       sendToActiveTab({ type: 'HIGHLIGHTER_DEACTIVATE' });
     }
   });
-}
 
+  document.getElementById('eraseHighlights').addEventListener('click', () => {
+    sendToActiveTab({ type: 'HIGHLIGHTER_ERASE_ALL' });
+  });
+}
 // STICKY NOTES
 function renderSticky() {
   toolContent.innerHTML = `
@@ -496,7 +518,7 @@ function renderColorPicker() {
       </div>
 
       <button class="pomo-btn pomo-start" id="pickColor" style="width:100%;background:#ff4444;">
-        🎯 Pick Color from Page
+         Pick Color from Page
       </button>
 
       <div id="colorHistory" style="width:100%;">
@@ -609,7 +631,7 @@ function renderRuler() {
         <div style="font-size:11px;color:#555;margin-top:4px;">width × height (px)</div>
       </div>
       <button class="pomo-btn pomo-start" id="rulerActivate" style="width:100%;">
-        📏 Activate Ruler
+         Activate Ruler
       </button>
       <p style="font-size:11px;color:#555;text-align:center;">
         After activating — click and drag on the page to measure
@@ -631,18 +653,20 @@ function renderScreenshot() {
         Capture the current page as a PNG image.
       </p>
       <button class="pomo-btn pomo-start" id="visibleShot" style="width:100%;">
-        📸 Capture Visible Area
+         Capture Visible Area
       </button>
       <button class="pomo-btn pomo-reset" id="fullShot" style="width:100%;">
-        📄 Capture Full Page
+         Capture Full Page
       </button>
-      <div id="screenshotStatus" style="font-size:12px;color:#555;text-align:center;min-height:20px;"></div>
+      <div id="screenshotStatus" 
+        style="font-size:12px;color:#aaa;text-align:center;min-height:20px;">
+      </div>
     </div>
   `;
 
   const status = document.getElementById('screenshotStatus');
 
-  // Visible screenshot
+  // Visible shot — simple and reliable
   document.getElementById('visibleShot').addEventListener('click', () => {
     status.textContent = 'Capturing...';
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -651,62 +675,152 @@ function renderScreenshot() {
           status.textContent = 'Error: ' + chrome.runtime.lastError.message;
           return;
         }
-        downloadImage(dataUrl, 'screenshot-visible');
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `screenshot-${Date.now()}.png`;
+        a.click();
         status.textContent = '✓ Saved!';
         setTimeout(() => status.textContent = '', 2000);
       });
     });
   });
 
-  // Full page screenshot
+  // Full page shot
   document.getElementById('fullShot').addEventListener('click', () => {
-    status.textContent = 'Capturing full page...';
+    status.textContent = 'Starting full page capture...';
+
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tabId = tabs[0].id;
+
+      // Step 1 — get page dimensions
       chrome.scripting.executeScript({
-        target: { tabId: tabs[0].id },
-        func: captureFullPage
+        target: { tabId },
+        func: () => ({
+          totalHeight: document.documentElement.scrollHeight,
+          viewportHeight: window.innerHeight,
+          viewportWidth: window.innerWidth,
+          originalScroll: window.scrollY
+        })
       }, (results) => {
-        if (chrome.runtime.lastError) {
-          status.textContent = 'Error: ' + chrome.runtime.lastError.message;
+        if (!results || !results[0]) {
+          status.textContent = 'Error getting page dimensions';
           return;
         }
-        status.textContent = '✓ Full page saved!';
-        setTimeout(() => status.textContent = '', 2000);
+
+        const { totalHeight, viewportHeight, viewportWidth, originalScroll } = results[0].result;
+        const frames = [];
+        let currentScroll = 0;
+
+        status.textContent = `Capturing... 0%`;
+
+        function captureFrame() {
+          // Scroll to position
+          chrome.scripting.executeScript({
+            target: { tabId },
+           func: (scrollY) => {
+  // Hide fixed elements during capture to prevent duplication
+  const fixedEls = document.querySelectorAll('*');
+  const hidden = [];
+  fixedEls.forEach(el => {
+    const pos = getComputedStyle(el).position;
+    if (pos === 'fixed' || pos === 'sticky') {
+      hidden.push({ el, display: el.style.display });
+      el.style.display = 'none';
+    }
+  });
+  window.scrollTo(0, scrollY);
+  // Store hidden elements to restore after capture
+  window._toolboxHidden = hidden;
+  return window.scrollY;
+},
+            args: [currentScroll]
+          }, () => {
+            // Wait for scroll and render
+            setTimeout(() => {
+              chrome.tabs.captureVisibleTab(null, { format: 'png' }, (dataUrl) => {
+                if (chrome.runtime.lastError) {
+                  status.textContent = 'Capture error: ' + chrome.runtime.lastError.message;
+                  return;
+                }
+
+                frames.push({ dataUrl, scrollY: currentScroll });
+                const percent = Math.min(100, Math.round((currentScroll / totalHeight) * 100));
+                status.textContent = `Capturing... ${percent}%`;
+
+                currentScroll += viewportHeight;
+
+                if (currentScroll < totalHeight) {
+                  captureFrame();
+                } else {
+                  // Restore scroll
+                  chrome.scripting.executeScript({
+                    target: { tabId },
+                    func: (s) => window.scrollTo(0, s),
+                    args: [originalScroll]
+                  });
+
+                  status.textContent = 'Stitching image...';
+                  stitchFrames(frames, viewportWidth, viewportHeight, totalHeight, status);
+                }
+              });
+            }, 400);
+          });
+        }
+
+        // Restore fixed elements
+chrome.scripting.executeScript({
+  target: { tabId },
+  func: () => {
+    if (window._toolboxHidden) {
+      window._toolboxHidden.forEach(({ el, display }) => {
+        el.style.display = display;
+      });
+      window._toolboxHidden = null;
+    }
+  }
+});
+
+        captureFrame();
       });
     });
   });
-
-  function downloadImage(dataUrl, name) {
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = `${name}-${Date.now()}.png`;
-    a.click();
-  }
 }
 
-// This runs INSIDE the page context for full page capture
-function captureFullPage() {
-  const totalHeight = document.body.scrollHeight;
-  const totalWidth = document.body.scrollWidth;
+// Stitch frames in popup context using canvas
+function stitchFrames(frames, width, viewportHeight, totalHeight, status) {
   const canvas = document.createElement('canvas');
-  canvas.width = totalWidth;
+  canvas.width = width;
   canvas.height = totalHeight;
   const ctx = canvas.getContext('2d');
 
-  // Draw background
-  ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#ffffff';
-  ctx.fillRect(0, 0, totalWidth, totalHeight);
+  let loaded = 0;
 
-  // Note: true full page screenshot requires scrolling + stitching
-  // which needs background script coordination
-  // This captures what's rendered in DOM as best effort
-  canvas.toBlob((blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `fullpage-${Date.now()}.png`;
-    a.click();
-    URL.revokeObjectURL(url);
+  frames.forEach((frame) => {
+    const img = new Image();
+    img.onload = () => {
+      // For the last frame, only draw the remaining portion
+      const isLast = frame.scrollY + viewportHeight > totalHeight;
+      if (isLast) {
+        const remaining = totalHeight - frame.scrollY;
+        const srcY = viewportHeight - remaining;
+        ctx.drawImage(img, 0, srcY, width, remaining, 0, frame.scrollY, width, remaining);
+      } else {
+        ctx.drawImage(img, 0, frame.scrollY);
+      }
+
+      loaded++;
+      if (loaded === frames.length) {
+        // Download
+        const dataUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `fullpage-${Date.now()}.png`;
+        a.click();
+        status.textContent = '✓ Full page saved!';
+        setTimeout(() => status.textContent = '', 3000);
+      }
+    };
+    img.src = frame.dataUrl;
   });
 }
 
@@ -715,14 +829,26 @@ function renderReaderMode() {
   toolContent.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:16px;padding:10px 0;">
       <p style="font-size:13px;color:#aaa;line-height:1.6;">
-        Strip away ads, sidebars, and clutter. Read any article in a clean minimal view.
+        Strip away ads, sidebars, and clutter for clean reading.
       </p>
-      <button class="pomo-btn pomo-start" id="readerToggle" style="width:100%;">📖 Enter Reader Mode</button>
-      <p style="font-size:11px;color:#555;text-align:center;">Click "Exit Reader Mode" on the page to restore it</p>
+      <button class="pomo-btn pomo-start" id="readerToggle" style="width:100%;">
+         Enter Reader Mode
+      </button>
+      <button class="pomo-btn pomo-reset" id="readerExit" style="width:100%;">
+        ✕ Exit Reader Mode
+      </button>
+      <p style="font-size:11px;color:#555;text-align:center;">
+        You can also exit by clicking the button on the page itself
+      </p>
     </div>
   `;
 
   document.getElementById('readerToggle').addEventListener('click', () => {
+    sendToActiveTab({ type: 'READER_TOGGLE' });
+    window.close();
+  });
+
+  document.getElementById('readerExit').addEventListener('click', () => {
     sendToActiveTab({ type: 'READER_TOGGLE' });
     window.close();
   });
@@ -735,7 +861,7 @@ function renderImageDownloader() {
       <p style="font-size:13px;color:#aaa;line-height:1.6;">
         Find and download all images on the current page.
       </p>
-      <button class="pomo-btn pomo-start" id="scanImages" style="width:100%;">🔍 Scan Page Images</button>
+      <button class="pomo-btn pomo-start" id="scanImages" style="width:100%;"> Scan Page Images</button>
       <div id="imageResults" style="
         max-height:180px;overflow-y:auto;
         display:flex;flex-direction:column;gap:6px;
@@ -785,7 +911,26 @@ function renderImageDownloader() {
             a.href = e.target.dataset.src;
             a.download = `image-${i + 1}.png`;
             a.target = '_blank';
-            a.click();
+            a.click();row.querySelector('button').addEventListener('click', (e) => {
+            const src = e.target.dataset.src;
+            // Fetch image as blob to force download
+            fetch(src)
+              .then(r => r.blob())
+              .then(blob => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const a = document.createElement('a');
+                  a.href = reader.result;
+                  a.download = `image-${i + 1}.png`;
+                  a.click();
+                };
+                reader.readAsDataURL(blob);
+              })
+              .catch(() => {
+                // Fallback — open in new tab
+                chrome.tabs.create({ url: src });
+              });
+          });
           });
           results.appendChild(row);
         });
@@ -793,3 +938,5 @@ function renderImageDownloader() {
     });
   });
 }
+// Initialize icons
+lucide.createIcons();

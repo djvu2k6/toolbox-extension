@@ -15,12 +15,14 @@
   "background": {
     "service_worker": "background/service-worker.js"
   },
-  "permissions": [
+ "permissions": [
     "storage",
     "tabs",
     "scripting",
     "activeTab",
-    "notifications"
+    "notifications",
+    "downloads",
+    "alarms"
   ],
   "host_permissions": [
     "<all_urls>"
